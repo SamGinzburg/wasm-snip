@@ -163,12 +163,13 @@ pub fn snip(module: &mut walrus::Module, options: Options) -> Result<(), failure
     let re_set = build_regex_set(options).context("failed to compile regex")?;
     let to_snip = find_functions_to_snip(&module, &names, &re_set);
 
+    // good enough for what we want, we will run wasm-opt after
     replace_calls_with_unreachable(module, &to_snip);
-    unexport_snipped_functions(module, &to_snip);
-    unimport_snipped_functions(module, &to_snip);
+    //unexport_snipped_functions(module, &to_snip);
+    //unimport_snipped_functions(module, &to_snip);
     //snip_table_elements(module, &to_snip);
-    delete_functions_to_snip(module, &to_snip);
-    walrus::passes::gc::run(module);
+    //delete_functions_to_snip(module, &to_snip);
+    //walrus::passes::gc::run(module);
 
     Ok(())
 }
