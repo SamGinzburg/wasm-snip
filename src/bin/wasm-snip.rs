@@ -44,14 +44,14 @@ fn try_main() -> Result<(), failure::Error> {
     let config = walrus_config_from_options(&opts);
     let path = matches.value_of("input").unwrap();
     let buf = fs::read(&path).with_context(|_| format!("failed to read file {}", path))?;
-    let mut module = config.parse(&buf)?;
+    let mut module = config.parse(&buf).unwrap();
 
     wasm_snip::snip(&mut module, opts).context("failed to snip functions from wasm module")?;
 
     if let Some(output) = matches.value_of("output") {
         module
-            .emit_wasm_file(output)
-            .with_context(|_| format!("failed to emit snipped wasm to {}", output))?;
+            .emit_wasm_file(output).unwrap();
+            //.expect(|_| format!("failed to emit snipped wasm to {}", output))?;
     } else {
         let wasm = module.emit_wasm();
         let stdout = io::stdout();

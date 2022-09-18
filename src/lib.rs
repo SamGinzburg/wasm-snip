@@ -166,7 +166,7 @@ pub fn snip(module: &mut walrus::Module, options: Options) -> Result<(), failure
     replace_calls_with_unreachable(module, &to_snip);
     unexport_snipped_functions(module, &to_snip);
     unimport_snipped_functions(module, &to_snip);
-    snip_table_elements(module, &to_snip);
+    //snip_table_elements(module, &to_snip);
     delete_functions_to_snip(module, &to_snip);
     walrus::passes::gc::run(module);
 
@@ -253,7 +253,7 @@ fn replace_calls_with_unreachable(
     }
 
     impl VisitorMut for Replacer<'_> {
-        fn visit_instr_mut(&mut self, instr: &mut walrus::ir::Instr) {
+        fn visit_instr_mut(&mut self, instr: &mut walrus::ir::Instr, _: &mut walrus::InstrLocId) {
             if self.should_snip_call(instr) {
                 *instr = walrus::ir::Unreachable {}.into();
             }
@@ -301,6 +301,7 @@ fn unimport_snipped_functions(module: &mut walrus::Module, to_snip: &HashSet<wal
     }
 }
 
+/*
 fn snip_table_elements(module: &mut walrus::Module, to_snip: &HashSet<walrus::FunctionId>) {
     let mut unreachable_funcs: HashMap<walrus::TypeId, walrus::FunctionId> = Default::default();
 
@@ -319,7 +320,24 @@ fn snip_table_elements(module: &mut walrus::Module, to_snip: &HashSet<walrus::Fu
     };
 
     for t in module.tables.iter_mut() {
-        if let walrus::TableKind::Function(ref mut ft) = t.kind {
+        let types = &mut module.types;
+        let locals = &mut module.locals;
+        let funcs = &mut module.funcs;
+
+
+        t.elem_segments
+        .iter_mut()
+        .flat_map(|el| el)
+        .filter(|f| to_snip.contains(f))
+        .for_each(|el| {
+            let ty = funcs.get(*el).ty();
+            *el = *unreachable_funcs
+                .entry(ty)
+                .or_insert_with(|| make_unreachable_func(ty, types, locals, funcs));
+        });
+
+        /*
+        if let walrus::Function(ref mut ft) = t.kind {
             let types = &mut module.types;
             let locals = &mut module.locals;
             let funcs = &mut module.funcs;
@@ -345,5 +363,7 @@ fn snip_table_elements(module: &mut walrus::Module, to_snip: &HashSet<walrus::Fu
                         .or_insert_with(|| make_unreachable_func(ty, types, locals, funcs));
                 });
         }
+        */
     }
 }
+*/
